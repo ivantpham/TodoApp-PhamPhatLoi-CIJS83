@@ -7,13 +7,32 @@ const App = () => {
     const [inputValue, setInputValue] = useState('');
     const [activeTag, setActiveTag] = useState('all');
 
+    const getTasksFromLocalStorage = () => {
+        const tasksToDisplay = [];
+        let n = 1;
+        let taskKey = 'task' + n;
+        while (localStorage.getItem(taskKey)) {
+            const taskData = JSON.parse(localStorage.getItem(taskKey));
+            tasksToDisplay.push(taskData);
+            n++;
+            taskKey = 'task' + n;
+        }
+        return tasksToDisplay;
+    };
+
     useEffect(() => {
-        const storedTasks = JSON.parse(localStorage.getItem('tasks')) || [];
-        setTasks(storedTasks);
+        const tasksToDisplay = getTasksFromLocalStorage();
+        if (tasksToDisplay.length > 0) {
+            setTasks(tasksToDisplay);
+        }
     }, []);
 
     useEffect(() => {
-        localStorage.setItem('tasks', JSON.stringify(tasks));
+        localStorage.clear();
+        tasks.forEach((task, index) => {
+            const taskKey = 'task' + (index + 1);
+            localStorage.setItem(taskKey, JSON.stringify(task));
+        });
     }, [tasks]);
 
     const handleInputChange = (e) => {
@@ -27,6 +46,9 @@ const App = () => {
                 text: inputValue,
                 completed: false,
             };
+            let taskIndex = tasks.length + 1;
+            const taskKey = 'task' + taskIndex;
+            localStorage.setItem(taskKey, JSON.stringify(newTask));
             setTasks([...tasks, newTask]);
             setInputValue('');
         }
@@ -48,10 +70,16 @@ const App = () => {
     const handleDeleteTask = (taskId) => {
         const updatedTasks = tasks.filter((task) => task.id !== taskId);
         setTasks(updatedTasks);
+        localStorage.clear();
+        updatedTasks.forEach((task, index) => {
+            const taskKey = 'task' + (index + 1);
+            localStorage.setItem(taskKey, JSON.stringify(task));
+        });
     };
 
     const handleDeleteAllTasks = () => {
         setTasks([]);
+        localStorage.clear();
     };
 
     const filteredTasks = tasks.filter((task) => {
