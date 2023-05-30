@@ -6,6 +6,8 @@ const App = () => {
     const [tasks, setTasks] = useState([]);
     const [inputValue, setInputValue] = useState('');
     const [activeTag, setActiveTag] = useState('all');
+    const [showAddButton, setShowAddButton] = useState(true);
+    const [showDeleteAllButton, setShowDeleteAllButton] = useState(false);
 
     const getTasksFromLocalStorage = () => {
         const tasksToDisplay = [];
@@ -78,8 +80,18 @@ const App = () => {
     };
 
     const handleDeleteAllTasks = () => {
-        setTasks([]);
+        const updatedTasks = tasks.filter((task) => {
+            if (activeTag === 'complete') {
+                return !task.completed;
+            }
+            return true;
+        });
+        setTasks(updatedTasks);
         localStorage.clear();
+        updatedTasks.forEach((task, index) => {
+            const taskKey = 'task' + (index + 1);
+            localStorage.setItem(taskKey, JSON.stringify(task));
+        });
     };
 
     const filteredTasks = tasks.filter((task) => {
@@ -91,6 +103,11 @@ const App = () => {
         return true;
     });
 
+    useEffect(() => {
+        setShowAddButton(activeTag !== 'complete');
+        setShowDeleteAllButton(activeTag === 'complete');
+    }, [activeTag]);
+
     return (
         <div className="app">
             <h1>Todo App</h1>
@@ -101,7 +118,7 @@ const App = () => {
                     value={inputValue}
                     onChange={handleInputChange}
                 />
-                <button onClick={handleAddTask}>Add</button>
+                {showAddButton && <button onClick={handleAddTask}>Add</button>}
             </div>
             <div className="tag-container">
                 <span
@@ -126,6 +143,11 @@ const App = () => {
             <ul className="task-list">
                 {filteredTasks.map((task) => (
                     <li key={task.id} className={task.completed ? 'completed' : ''}>
+                        <input
+                            type="checkbox"
+                            checked={task.completed}
+                            onChange={() => handleCompleteTask(task.id)}
+                        />
                         <span
                             className="task-text"
                             onClick={() => handleCompleteTask(task.id)}
@@ -139,9 +161,11 @@ const App = () => {
                     </li>
                 ))}
             </ul>
-            <button className="delete-all-button" onClick={handleDeleteAllTasks}>
-                Delete All
-            </button>
+            {showDeleteAllButton && (
+                <button className="delete-all-button" onClick={handleDeleteAllTasks}>
+                    Delete All
+                </button>
+            )}
         </div>
     );
 };
